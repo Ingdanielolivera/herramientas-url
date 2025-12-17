@@ -1,0 +1,770 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Generador de URLs y Herramientas</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+          Oxygen, Ubuntu, Cantarell, sans-serif;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+      }
+
+      .container {
+        background: white;
+        border-radius: 16px;
+        padding: 40px;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        max-width: 600px;
+        width: 100%;
+      }
+
+      h1 {
+        text-align: center;
+        color: #333;
+        margin-bottom: 30px;
+        font-size: 24px;
+      }
+
+      /* Tabs Navigation */
+      .tabs-nav {
+        display: flex;
+        gap: 0;
+        margin-bottom: 30px;
+        border-bottom: 2px solid #e0e0e0;
+        width: 100%;
+      }
+
+      .tab-btn {
+        flex: 1;
+        padding: 14px 16px;
+        background: transparent;
+        border: none;
+        border-bottom: 3px solid transparent;
+        cursor: pointer;
+        font-weight: 600;
+        font-size: 14px;
+        color: #666;
+        transition: all 0.3s;
+        white-space: nowrap;
+        text-align: center;
+        min-width: 0;
+      }
+
+      .tab-btn:hover {
+        color: #667eea;
+        background: #f8f9fa;
+      }
+
+      .tab-btn.active {
+        color: #667eea;
+        border-bottom-color: #667eea;
+        background: #f8f9fa;
+      }
+
+      /* Tab Content */
+      .tab-content {
+        display: none;
+      }
+
+      .tab-content.active {
+        display: block;
+        animation: fadeIn 0.3s ease-in;
+      }
+
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+          transform: translateY(10px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      /* Input Groups */
+      .input-group {
+        margin-bottom: 30px;
+      }
+
+      label {
+        display: block;
+        margin-bottom: 8px;
+        color: #555;
+        font-weight: 500;
+        font-size: 14px;
+      }
+
+      input[type="text"] {
+        width: 100%;
+        padding: 12px 16px;
+        border: 2px solid #e0e0e0;
+        border-radius: 8px;
+        font-size: 16px;
+        transition: border-color 0.3s;
+      }
+
+      input[type="text"]:focus {
+        outline: none;
+        border-color: #667eea;
+      }
+
+      /* Output Groups */
+      .output-group {
+        margin-bottom: 20px;
+      }
+
+      /* SMS Sections with visual separation */
+      .sms-section {
+        background: #f8f9fa;
+        border-radius: 12px;
+        padding: 20px;
+        margin-bottom: 20px;
+        border: 2px solid #e0e0e0;
+      }
+
+      .sms-section.en {
+        background: #e8f4f8;
+        border-color: #4fc3f7;
+      }
+
+      .sms-section.es {
+        background: #fff3e0;
+        border-color: #ffb74d;
+      }
+
+      .sms-section label {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 12px;
+        font-weight: 600;
+        font-size: 15px;
+      }
+
+      .sms-section.en label {
+        color: #0277bd;
+      }
+
+      .sms-section.es label {
+        color: #e65100;
+      }
+
+      .language-badge {
+        display: inline-block;
+        padding: 4px 10px;
+        border-radius: 12px;
+        font-size: 11px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+      }
+
+      .language-badge.en {
+        background: #4fc3f7;
+        color: white;
+      }
+
+      .language-badge.es {
+        background: #ffb74d;
+        color: white;
+      }
+
+      .output-item {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 0;
+      }
+
+      .output-field {
+        flex: 1;
+        padding: 12px 16px;
+        background: white;
+        border: 2px solid #e0e0e0;
+        border-radius: 8px;
+        font-size: 14px;
+        color: #333;
+        font-family: "Courier New", monospace;
+        word-break: break-all;
+      }
+
+      /* Buttons */
+      .copy-btn {
+        padding: 12px 20px;
+        background: #667eea;
+        color: white;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+        font-weight: 600;
+        font-size: 14px;
+        transition: all 0.3s;
+        white-space: nowrap;
+      }
+
+      .copy-btn:hover {
+        background: #5568d3;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+      }
+
+      .copy-btn:active {
+        transform: translateY(0);
+      }
+
+      .copy-btn.copied {
+        background: #48bb78;
+      }
+
+      .copy-btn:disabled {
+        background: #ccc;
+        cursor: not-allowed;
+        transform: none;
+      }
+
+      /* Configuration Section */
+      .config-section {
+        background: #f8f9fa;
+        padding: 20px;
+        border-radius: 8px;
+        margin-bottom: 20px;
+      }
+
+      .config-item {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+        margin-bottom: 12px;
+      }
+
+      .config-item input[type="text"] {
+        flex: 1;
+        padding: 8px 12px;
+        font-size: 14px;
+      }
+
+      .config-item input[type="checkbox"] {
+        width: 20px;
+        height: 20px;
+        cursor: pointer;
+      }
+
+      .btn-small {
+        padding: 8px 16px;
+        background: #dc3545;
+        color: white;
+        border: none;
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 12px;
+        font-weight: 600;
+        transition: all 0.3s;
+      }
+
+      .btn-small:hover {
+        background: #c82333;
+      }
+
+      .btn-add {
+        padding: 10px 20px;
+        background: #28a745;
+        color: white;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+        font-weight: 600;
+        font-size: 14px;
+        transition: all 0.3s;
+        width: 100%;
+      }
+
+      .btn-add:hover {
+        background: #218838;
+      }
+
+      .config-label {
+        flex: 1;
+        color: #333;
+        font-size: 14px;
+      }
+
+      .empty-config {
+        text-align: center;
+        color: #999;
+        font-style: italic;
+        padding: 20px;
+      }
+
+      /* Responsive */
+      @media (max-width: 600px) {
+        .container {
+          padding: 24px;
+        }
+
+        h1 {
+          font-size: 20px;
+          margin-bottom: 20px;
+        }
+
+        .tab-btn {
+          font-size: 12px;
+          padding: 12px 8px;
+        }
+
+        .output-item {
+          flex-direction: column;
+        }
+
+        .copy-btn {
+          width: 100%;
+        }
+
+        .config-item {
+          flex-wrap: wrap;
+        }
+
+        .config-item input[type="checkbox"] {
+          order: -1;
+        }
+
+        .sms-section {
+          padding: 15px;
+        }
+      }
+
+      @media (max-width: 400px) {
+        .tab-btn {
+          font-size: 11px;
+          padding: 10px 6px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h1>🛠️ Herramientas</h1>
+
+      <!-- Tabs Navigation -->
+      <div class="tabs-nav">
+        <button class="tab-btn active" data-tab="generator">
+          Generador URLs
+        </button>
+        <button class="tab-btn" data-tab="phone">
+          Arreglar Número
+        </button>
+        <button class="tab-btn" data-tab="config">
+          ⚙️ Configuración
+        </button>
+      </div>
+
+      <!-- Tab 1: Generador de URLs -->
+      <div id="generator" class="tab-content active">
+        <div class="input-group">
+          <label for="baseInput">Ingresa el código base:</label>
+          <input
+            type="text"
+            id="baseInput"
+            placeholder="Ej: a21"
+            autocomplete="off"
+          />
+        </div>
+
+        <div class="output-group">
+          <label>Resultados:</label>
+          <div id="generatorOutputs"></div>
+        </div>
+      </div>
+
+      <!-- Tab 2: Arreglar Número -->
+      <div id="phone" class="tab-content">
+        <div class="input-group">
+          <label for="phoneInput">Ingresa el número de teléfono:</label>
+          <input
+            type="text"
+            id="phoneInput"
+            placeholder="Ej: 1 561-556-5604"
+            autocomplete="off"
+          />
+        </div>
+
+        <div class="output-group">
+          <label>Número limpio:</label>
+          <div class="output-item">
+            <div class="output-field" id="phoneOutput">-</div>
+            <button
+              class="copy-btn"
+              onclick="copyToClipboard('phoneOutput', this)"
+              id="phoneOutputBtn"
+              disabled
+            >
+              Copiar
+            </button>
+          </div>
+        </div>
+
+        <div class="output-group">
+          <label>Formato (XXX) XXX-XXXX:</label>
+          <div class="output-item">
+            <div class="output-field" id="formattedOutput">-</div>
+            <button
+              class="copy-btn"
+              onclick="copyToClipboard('formattedOutput', this)"
+              id="formattedOutputBtn"
+              disabled
+            >
+              Copiar
+            </button>
+          </div>
+        </div>
+
+        <!-- Enlace SMS EN (Inglés) -->
+        <div class="sms-section en">
+          <label>
+            <span class="language-badge en">EN</span>
+            Enlace SMS EN
+          </label>
+          <div class="output-item">
+            <div class="output-field" id="smsOutputEN">-</div>
+            <button
+              class="copy-btn"
+              onclick="copyToClipboard('smsOutputEN', this)"
+              id="smsOutputENBtn"
+              disabled
+            >
+              Copiar
+            </button>
+          </div>
+        </div>
+
+        <!-- Enlace SMS ES (Español) -->
+        <div class="sms-section es">
+          <label>
+            <span class="language-badge es">ES</span>
+            Enlace SMS ES
+          </label>
+          <div class="output-item">
+            <div class="output-field" id="smsOutputES">-</div>
+            <button
+              class="copy-btn"
+              onclick="copyToClipboard('smsOutputES', this)"
+              id="smsOutputESBtn"
+              disabled
+            >
+              Copiar
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tab 3: Configuración -->
+      <div id="config" class="tab-content">
+        <div class="config-section">
+          <label style="margin-bottom: 15px">
+            <strong>Sufijos para el Generador de URLs:</strong>
+          </label>
+
+          <div id="suffixList"></div>
+
+          <div style="margin-top: 15px">
+            <input
+              type="text"
+              id="newSuffix"
+              placeholder="Ej: /sms-mx"
+              style="margin-bottom: 10px"
+            />
+            <button class="btn-add" onclick="addSuffix()">
+              ➕ Agregar Sufijo
+            </button>
+          </div>
+        </div>
+
+        <p style="text-align: center; color: #999; font-size: 12px; margin-top: 20px">
+          Los cambios se guardan automáticamente
+        </p>
+      </div>
+    </div>
+
+    <script>
+      // Default configuration
+      const DEFAULT_SUFFIXES = [
+        { value: "/sms", active: true },
+        { value: "/sms-es", active: true },
+      ];
+
+      // SMS templates
+      const SMS_TEMPLATE_EN = "sms:{NUMBER}?body=Hey%2C%20I%27d%20like%20a%20free%20design%20%26%20estimate%20for%20my%20remodeling%20project.";
+      const SMS_TEMPLATE_ES = "sms:{NUMBER}?body=Hola%2C%20me%20gustaria%20recibir%20un%20diseno%20y%20estimado%20gratis%20para%20mi%20proyecto%20de%20remodelacion.";
+
+      // Load configuration from localStorage
+      function loadConfig() {
+        const saved = localStorage.getItem("urlGeneratorConfig");
+        if (saved) {
+          try {
+            return JSON.parse(saved);
+          } catch (e) {
+            console.error("Error loading config:", e);
+            return DEFAULT_SUFFIXES;
+          }
+        }
+        return DEFAULT_SUFFIXES;
+      }
+
+      // Save configuration to localStorage
+      function saveConfig(config) {
+        localStorage.setItem("urlGeneratorConfig", JSON.stringify(config));
+      }
+
+      // Format phone number as (XXX) XXX-XXXX
+      function formatPhoneNumber(number) {
+        // Remove leading "1" if exists and number has 11 digits
+        let cleanNumber = number;
+        if (cleanNumber.startsWith("1") && cleanNumber.length === 11) {
+          cleanNumber = cleanNumber.substring(1);
+        }
+
+        // Format only if we have 10 digits
+        if (cleanNumber.length === 10) {
+          return `(${cleanNumber.substring(0, 3)}) ${cleanNumber.substring(3, 6)}-${cleanNumber.substring(6)}`;
+        }
+
+        // Return original if not 10 digits
+        return number;
+      }
+
+      // Current configuration
+      let suffixes = loadConfig();
+
+      // Tab switching
+      document.querySelectorAll(".tab-btn").forEach((btn) => {
+        btn.addEventListener("click", function () {
+          const tabId = this.dataset.tab;
+
+          // Update active button
+          document.querySelectorAll(".tab-btn").forEach((b) => b.classList.remove("active"));
+          this.classList.add("active");
+
+          // Update active content
+          document.querySelectorAll(".tab-content").forEach((c) => c.classList.remove("active"));
+          document.getElementById(tabId).classList.add("active");
+        });
+      });
+
+      // Render suffix configuration
+      function renderSuffixList() {
+        const list = document.getElementById("suffixList");
+
+        if (suffixes.length === 0) {
+          list.innerHTML = '<div class="empty-config">No hay sufijos configurados</div>';
+          return;
+        }
+
+        list.innerHTML = suffixes
+          .map(
+            (suffix, index) => `
+          <div class="config-item">
+            <input 
+              type="checkbox" 
+              id="suffix-${index}" 
+              ${suffix.active ? "checked" : ""} 
+              onchange="toggleSuffix(${index})"
+            />
+            <label class="config-label" for="suffix-${index}">
+              <code>${suffix.value}</code>
+            </label>
+            <button class="btn-small" onclick="removeSuffix(${index})">
+              Eliminar
+            </button>
+          </div>
+        `
+          )
+          .join("");
+      }
+
+      // Add new suffix
+      function addSuffix() {
+        const input = document.getElementById("newSuffix");
+        const value = input.value.trim();
+
+        if (!value) {
+          alert("Por favor ingresa un sufijo");
+          return;
+        }
+
+        // Check if already exists
+        if (suffixes.some((s) => s.value === value)) {
+          alert("Este sufijo ya existe");
+          return;
+        }
+
+        suffixes.push({ value, active: true });
+        saveConfig(suffixes);
+        renderSuffixList();
+        updateGeneratorOutputs();
+
+        input.value = "";
+      }
+
+      // Remove suffix
+      function removeSuffix(index) {
+        if (confirm("¿Eliminar este sufijo?")) {
+          suffixes.splice(index, 1);
+          saveConfig(suffixes);
+          renderSuffixList();
+          updateGeneratorOutputs();
+        }
+      }
+
+      // Toggle suffix active state
+      function toggleSuffix(index) {
+        suffixes[index].active = !suffixes[index].active;
+        saveConfig(suffixes);
+        updateGeneratorOutputs();
+      }
+
+      // Update generator outputs
+      function updateGeneratorOutputs() {
+        const baseInput = document.getElementById("baseInput");
+        const outputsDiv = document.getElementById("generatorOutputs");
+        const baseValue = baseInput.value.trim();
+
+        const activeSuffixes = suffixes.filter((s) => s.active);
+
+        if (!baseValue || activeSuffixes.length === 0) {
+          outputsDiv.innerHTML = '<div style="text-align: center; color: #999; font-style: italic; padding: 20px">-</div>';
+          return;
+        }
+
+        outputsDiv.innerHTML = activeSuffixes
+          .map(
+            (suffix, index) => `<div class="output-item"><div class="output-field" id="gen-output-${index}">${baseValue}${suffix.value}</div><button class="copy-btn" onclick="copyToClipboard('gen-output-${index}', this)">Copiar</button></div>`
+          )
+          .join("");
+      }
+
+      // Generator input listener
+      const baseInput = document.getElementById("baseInput");
+      baseInput.addEventListener("input", updateGeneratorOutputs);
+
+      // Phone number sanitizer with SMS links (EN & ES) and formatted output
+      const phoneInput = document.getElementById("phoneInput");
+      const phoneOutput = document.getElementById("phoneOutput");
+      const phoneOutputBtn = document.getElementById("phoneOutputBtn");
+      const formattedOutput = document.getElementById("formattedOutput");
+      const formattedOutputBtn = document.getElementById("formattedOutputBtn");
+      const smsOutputEN = document.getElementById("smsOutputEN");
+      const smsOutputENBtn = document.getElementById("smsOutputENBtn");
+      const smsOutputES = document.getElementById("smsOutputES");
+      const smsOutputESBtn = document.getElementById("smsOutputESBtn");
+
+      phoneInput.addEventListener("input", function () {
+        const value = this.value.trim();
+
+        if (value) {
+          // Remove all non-numeric characters
+          const sanitized = value.replace(/\D/g, "");
+
+          if (sanitized) {
+            // Update phone output (clean number)
+            phoneOutput.textContent = sanitized;
+            phoneOutputBtn.disabled = false;
+
+            // Update formatted output
+            const formatted = formatPhoneNumber(sanitized);
+            formattedOutput.textContent = formatted;
+            formattedOutputBtn.disabled = false;
+
+            // Generate SMS links (EN & ES)
+            const smsLinkEN = SMS_TEMPLATE_EN.replace("{NUMBER}", sanitized);
+            smsOutputEN.textContent = smsLinkEN;
+            smsOutputENBtn.disabled = false;
+
+            const smsLinkES = SMS_TEMPLATE_ES.replace("{NUMBER}", sanitized);
+            smsOutputES.textContent = smsLinkES;
+            smsOutputESBtn.disabled = false;
+          } else {
+            phoneOutput.textContent = "-";
+            phoneOutputBtn.disabled = true;
+            formattedOutput.textContent = "-";
+            formattedOutputBtn.disabled = true;
+            smsOutputEN.textContent = "-";
+            smsOutputENBtn.disabled = true;
+            smsOutputES.textContent = "-";
+            smsOutputESBtn.disabled = true;
+          }
+        } else {
+          phoneOutput.textContent = "-";
+          phoneOutputBtn.disabled = true;
+          formattedOutput.textContent = "-";
+          formattedOutputBtn.disabled = true;
+          smsOutputEN.textContent = "-";
+          smsOutputENBtn.disabled = true;
+          smsOutputES.textContent = "-";
+          smsOutputESBtn.disabled = true;
+        }
+      });
+
+      // Copy to clipboard function
+      async function copyToClipboard(elementId, button) {
+        const element = document.getElementById(elementId);
+        const text = element.textContent.trim();
+
+        if (!text || text === "-") return;
+
+        try {
+          await navigator.clipboard.writeText(text);
+
+          // Visual feedback
+          const originalText = button.textContent;
+          button.textContent = "¡Copiado!";
+          button.classList.add("copied");
+
+          setTimeout(() => {
+            button.textContent = originalText;
+            button.classList.remove("copied");
+          }, 2000);
+        } catch (err) {
+          // Fallback for older browsers
+          const textarea = document.createElement("textarea");
+          textarea.value = text;
+          textarea.style.position = "fixed";
+          textarea.style.opacity = "0";
+          document.body.appendChild(textarea);
+          textarea.select();
+
+          try {
+            document.execCommand("copy");
+            button.textContent = "¡Copiado!";
+            button.classList.add("copied");
+
+            setTimeout(() => {
+              button.textContent = "Copiar";
+              button.classList.remove("copied");
+            }, 2000);
+          } catch (err) {
+            console.error("Error al copiar:", err);
+            alert("No se pudo copiar al portapapeles");
+          }
+
+          document.body.removeChild(textarea);
+        }
+      }
+
+      // Initialize
+      renderSuffixList();
+      updateGeneratorOutputs();
+    </script>
+  </body>
+</html>
