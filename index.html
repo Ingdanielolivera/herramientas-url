@@ -126,6 +126,12 @@
       .output-group {
         margin-bottom: 20px;
       }
+      .output-item {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 10px; /* Espacio entre resultados */
+      }
+
 
       /* SMS Sections with visual separation */
       .sms-section {
@@ -497,283 +503,367 @@
       </div>
     </div>
 
-    <script>
-      // Default configuration
-// Default configuration
-const DEFAULT_SUFFIXES = [
-  { value: "/es", active: true },
-  { value: "/sms", active: true },
-  { value: "/sms-es", active: true },
-  { value: "/thank-you", active: true },
-  { value: "/gracias", active: true },
-  { value: "/terms-conditions", active: true },
-  { value: "/privacy-policy", active: true },
-  { value: "/terminos-condiciones", active: true },
-  { value: "/politica-privacidad", active: true },
-];
+<script>
+  // Default configuration
+  const DEFAULT_SUFFIXES = [
+    { value: "/es", active: true },
+    { value: "/sms", active: true },
+    { value: "/sms-es", active: true },
+    { value: "/thank-you", active: true },
+    { value: "/gracias", active: true },
+    { value: "/terms-conditions", active: true },
+    { value: "/privacy-policy", active: true },
+    { value: "/terminos-condiciones", active: true },
+    { value: "/politica-privacidad", active: true },
+  ];
 
+  // Default SMS templates
+  const DEFAULT_SMS_EN = "sms:{NUMBER}?body=Hey%2C%20I%27d%20like%20a%20free%20design%20%26%20estimate%20for%20my%20remodeling%20project.";
+  const DEFAULT_SMS_ES = "sms:{NUMBER}?body=Hola%2C%20me%20gustaria%20recibir%20un%20diseno%20y%20estimado%20gratis%20para%20mi%20proyecto%20de%20remodelacion.";
 
-      // SMS templates
-      const SMS_TEMPLATE_EN = "sms:{NUMBER}?body=Hey%2C%20I%27d%20like%20a%20free%20design%20%26%20estimate%20for%20my%20remodeling%20project.";
-      const SMS_TEMPLATE_ES = "sms:{NUMBER}?body=Hola%2C%20me%20gustaria%20recibir%20un%20diseno%20y%20estimado%20gratis%20para%20mi%20proyecto%20de%20remodelacion.";
-
-      // Load configuration from localStorage
-      function loadConfig() {
-        const saved = localStorage.getItem("urlGeneratorConfig");
-        if (saved) {
-          try {
-            return JSON.parse(saved);
-          } catch (e) {
-            console.error("Error loading config:", e);
-            return DEFAULT_SUFFIXES;
-          }
-        }
+  // Load configuration from localStorage
+  function loadConfig() {
+    const saved = localStorage.getItem("urlGeneratorConfig");
+    if (saved) {
+      try {
+        return JSON.parse(saved);
+      } catch (e) {
+        console.error("Error loading config:", e);
         return DEFAULT_SUFFIXES;
       }
+    }
+    return DEFAULT_SUFFIXES;
+  }
 
-      // Save configuration to localStorage
-      function saveConfig(config) {
-        localStorage.setItem("urlGeneratorConfig", JSON.stringify(config));
+  // Load SMS templates from localStorage
+  function loadSMSTemplates() {
+    const saved = localStorage.getItem("smsTemplates");
+    if (saved) {
+      try {
+        return JSON.parse(saved);
+      } catch (e) {
+        console.error("Error loading SMS templates:", e);
+        return { en: DEFAULT_SMS_EN, es: DEFAULT_SMS_ES };
       }
+    }
+    return { en: DEFAULT_SMS_EN, es: DEFAULT_SMS_ES };
+  }
 
-      // Format phone number as (XXX) XXX-XXXX
-      function formatPhoneNumber(number) {
-        // Remove leading "1" if exists and number has 11 digits
-        let cleanNumber = number;
-        if (cleanNumber.startsWith("1") && cleanNumber.length === 11) {
-          cleanNumber = cleanNumber.substring(1);
-        }
+  // Save configuration to localStorage
+  function saveConfig(config) {
+    localStorage.setItem("urlGeneratorConfig", JSON.stringify(config));
+  }
 
-        // Format only if we have 10 digits
-        if (cleanNumber.length === 10) {
-          return `(${cleanNumber.substring(0, 3)}) ${cleanNumber.substring(3, 6)}-${cleanNumber.substring(6)}`;
-        }
+  // Save SMS templates to localStorage
+  function saveSMSTemplates(templates) {
+    localStorage.setItem("smsTemplates", JSON.stringify(templates));
+  }
 
-        // Return original if not 10 digits
-        return number;
+  // Format phone number as (XXX) XXX-XXXX
+  function formatPhoneNumber(number) {
+    let cleanNumber = number;
+    if (cleanNumber.startsWith("1") && cleanNumber.length === 11) {
+      cleanNumber = cleanNumber.substring(1);
+    }
+    if (cleanNumber.length === 10) {
+      return `(${cleanNumber.substring(0, 3)}) ${cleanNumber.substring(3, 6)}-${cleanNumber.substring(6)}`;
+    }
+    return number;
+  }
+
+  // Current configuration
+  let suffixes = loadConfig();
+  let smsTemplates = loadSMSTemplates();
+  let lastBaseValue = ""; // Track last base value for copy state
+
+  // Tab switching
+  document.querySelectorAll(".tab-btn").forEach((btn) => {
+    btn.addEventListener("click", function () {
+      const tabId = this.dataset.tab;
+      document.querySelectorAll(".tab-btn").forEach((b) => b.classList.remove("active"));
+      this.classList.add("active");
+      document.querySelectorAll(".tab-content").forEach((c) => c.classList.remove("active"));
+      document.getElementById(tabId).classList.add("active");
+      
+      // Render SMS config when opening config tab
+      if (tabId === "config") {
+        renderSMSConfig();
       }
+    });
+  });
 
-      // Current configuration
-      let suffixes = loadConfig();
+  // Render suffix configuration
+  function renderSuffixList() {
+    const list = document.getElementById("suffixList");
+    if (suffixes.length === 0) {
+      list.innerHTML = '<div class="empty-config">No hay sufijos configurados</div>';
+      return;
+    }
+    list.innerHTML = suffixes
+      .map(
+        (suffix, index) => `
+        <div class="config-item">
+          <input type="checkbox" id="suffix-${index}" ${suffix.active ? "checked" : ""} onchange="toggleSuffix(${index})" />
+          <label class="config-label" for="suffix-${index}">
+            <code>${suffix.value}</code>
+          </label>
+          <button class="btn-small" onclick="removeSuffix(${index})">
+            Eliminar
+          </button>
+        </div>
+      `
+      )
+      .join("");
+  }
 
-      // Tab switching
-      document.querySelectorAll(".tab-btn").forEach((btn) => {
-        btn.addEventListener("click", function () {
-          const tabId = this.dataset.tab;
+  // Render SMS templates configuration
+  function renderSMSConfig() {
+    const existingConfig = document.getElementById("smsConfig");
+    if (existingConfig) return; // Already rendered
 
-          // Update active button
-          document.querySelectorAll(".tab-btn").forEach((b) => b.classList.remove("active"));
-          this.classList.add("active");
+    const configTab = document.getElementById("config");
+    const smsConfigHTML = `
+      <div class="config-section" id="smsConfig" style="margin-top: 20px;">
+        <label style="margin-bottom: 15px">
+          <strong>Plantillas SMS:</strong>
+        </label>
+        
+        <div style="margin-bottom: 15px;">
+          <label style="font-size: 13px; color: #0277bd; font-weight: 600;">
+            <span class="language-badge en">EN</span> Plantilla SMS Inglés
+          </label>
+          <textarea id="smsTemplateEN" rows="3" style="width: 100%; padding: 10px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 13px; font-family: 'Courier New', monospace; margin-top: 8px; resize: vertical;">${smsTemplates.en}</textarea>
+          <small style="color: #666; font-size: 11px; display: block; margin-top: 5px;">
+            Usa {NUMBER} donde debe ir el número de teléfono
+          </small>
+        </div>
 
-          // Update active content
-          document.querySelectorAll(".tab-content").forEach((c) => c.classList.remove("active"));
-          document.getElementById(tabId).classList.add("active");
-        });
-      });
+        <div style="margin-bottom: 15px;">
+          <label style="font-size: 13px; color: #e65100; font-weight: 600;">
+            <span class="language-badge es">ES</span> Plantilla SMS Español
+          </label>
+          <textarea id="smsTemplateES" rows="3" style="width: 100%; padding: 10px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 13px; font-family: 'Courier New', monospace; margin-top: 8px; resize: vertical;">${smsTemplates.es}</textarea>
+          <small style="color: #666; font-size: 11px; display: block; margin-top: 5px;">
+            Usa {NUMBER} donde debe ir el número de teléfono
+          </small>
+        </div>
 
-      // Render suffix configuration
-      function renderSuffixList() {
-        const list = document.getElementById("suffixList");
+        <button class="btn-add" onclick="saveSMSConfig()">
+          💾 Guardar Plantillas SMS
+        </button>
+      </div>
+    `;
+    
+    configTab.insertAdjacentHTML('beforeend', smsConfigHTML);
+  }
 
-        if (suffixes.length === 0) {
-          list.innerHTML = '<div class="empty-config">No hay sufijos configurados</div>';
-          return;
-        }
+  // Save SMS config
+  function saveSMSConfig() {
+    const templateEN = document.getElementById("smsTemplateEN").value.trim();
+    const templateES = document.getElementById("smsTemplateES").value.trim();
+    
+    if (!templateEN.includes("{NUMBER}") || !templateES.includes("{NUMBER}")) {
+      alert("Las plantillas deben incluir {NUMBER} para el número de teléfono");
+      return;
+    }
 
-        list.innerHTML = suffixes
-          .map(
-            (suffix, index) => `
-          <div class="config-item">
-            <input 
-              type="checkbox" 
-              id="suffix-${index}" 
-              ${suffix.active ? "checked" : ""} 
-              onchange="toggleSuffix(${index})"
-            />
-            <label class="config-label" for="suffix-${index}">
-              <code>${suffix.value}</code>
-            </label>
-            <button class="btn-small" onclick="removeSuffix(${index})">
-              Eliminar
-            </button>
-          </div>
-        `
-          )
-          .join("");
-      }
+    smsTemplates = { en: templateEN, es: templateES };
+    saveSMSTemplates(smsTemplates);
+    alert("✅ Plantillas SMS guardadas correctamente");
+    
+    // Update phone output if there's a value
+    const phoneInput = document.getElementById("phoneInput");
+    if (phoneInput.value.trim()) {
+      phoneInput.dispatchEvent(new Event('input'));
+    }
+  }
 
-      // Add new suffix
-      function addSuffix() {
-        const input = document.getElementById("newSuffix");
-        const value = input.value.trim();
+  // Add new suffix
+  function addSuffix() {
+    const input = document.getElementById("newSuffix");
+    const value = input.value.trim();
+    if (!value) {
+      alert("Por favor ingresa un sufijo");
+      return;
+    }
+    if (suffixes.some((s) => s.value === value)) {
+      alert("Este sufijo ya existe");
+      return;
+    }
+    suffixes.push({ value, active: true });
+    saveConfig(suffixes);
+    renderSuffixList();
+    updateGeneratorOutputs();
+    input.value = "";
+  }
 
-        if (!value) {
-          alert("Por favor ingresa un sufijo");
-          return;
-        }
-
-        // Check if already exists
-        if (suffixes.some((s) => s.value === value)) {
-          alert("Este sufijo ya existe");
-          return;
-        }
-
-        suffixes.push({ value, active: true });
-        saveConfig(suffixes);
-        renderSuffixList();
-        updateGeneratorOutputs();
-
-        input.value = "";
-      }
-
-      // Remove suffix
-      function removeSuffix(index) {
-        if (confirm("¿Eliminar este sufijo?")) {
-          suffixes.splice(index, 1);
-          saveConfig(suffixes);
-          renderSuffixList();
-          updateGeneratorOutputs();
-        }
-      }
-
-      // Toggle suffix active state
-      function toggleSuffix(index) {
-        suffixes[index].active = !suffixes[index].active;
-        saveConfig(suffixes);
-        updateGeneratorOutputs();
-      }
-
-      // Update generator outputs
-      function updateGeneratorOutputs() {
-        const baseInput = document.getElementById("baseInput");
-        const outputsDiv = document.getElementById("generatorOutputs");
-        const baseValue = baseInput.value.trim();
-
-        const activeSuffixes = suffixes.filter((s) => s.active);
-
-        if (!baseValue || activeSuffixes.length === 0) {
-          outputsDiv.innerHTML = '<div style="text-align: center; color: #999; font-style: italic; padding: 20px">-</div>';
-          return;
-        }
-
-        outputsDiv.innerHTML = activeSuffixes
-          .map(
-            (suffix, index) => `<div class="output-item"><div class="output-field" id="gen-output-${index}">${baseValue}${suffix.value}</div><button class="copy-btn" onclick="copyToClipboard('gen-output-${index}', this)">Copiar</button></div>`
-          )
-          .join("");
-      }
-
-      // Generator input listener
-      const baseInput = document.getElementById("baseInput");
-      baseInput.addEventListener("input", updateGeneratorOutputs);
-
-      // Phone number sanitizer with SMS links (EN & ES) and formatted output
-      const phoneInput = document.getElementById("phoneInput");
-      const phoneOutput = document.getElementById("phoneOutput");
-      const phoneOutputBtn = document.getElementById("phoneOutputBtn");
-      const formattedOutput = document.getElementById("formattedOutput");
-      const formattedOutputBtn = document.getElementById("formattedOutputBtn");
-      const smsOutputEN = document.getElementById("smsOutputEN");
-      const smsOutputENBtn = document.getElementById("smsOutputENBtn");
-      const smsOutputES = document.getElementById("smsOutputES");
-      const smsOutputESBtn = document.getElementById("smsOutputESBtn");
-
-      phoneInput.addEventListener("input", function () {
-        const value = this.value.trim();
-
-        if (value) {
-          // Remove all non-numeric characters
-          const sanitized = value.replace(/\D/g, "");
-
-          if (sanitized) {
-            // Update phone output (clean number)
-            phoneOutput.textContent = sanitized;
-            phoneOutputBtn.disabled = false;
-
-            // Update formatted output
-            const formatted = formatPhoneNumber(sanitized);
-            formattedOutput.textContent = formatted;
-            formattedOutputBtn.disabled = false;
-
-            // Generate SMS links (EN & ES)
-            const smsLinkEN = SMS_TEMPLATE_EN.replace("{NUMBER}", sanitized);
-            smsOutputEN.textContent = smsLinkEN;
-            smsOutputENBtn.disabled = false;
-
-            const smsLinkES = SMS_TEMPLATE_ES.replace("{NUMBER}", sanitized);
-            smsOutputES.textContent = smsLinkES;
-            smsOutputESBtn.disabled = false;
-          } else {
-            phoneOutput.textContent = "-";
-            phoneOutputBtn.disabled = true;
-            formattedOutput.textContent = "-";
-            formattedOutputBtn.disabled = true;
-            smsOutputEN.textContent = "-";
-            smsOutputENBtn.disabled = true;
-            smsOutputES.textContent = "-";
-            smsOutputESBtn.disabled = true;
-          }
-        } else {
-          phoneOutput.textContent = "-";
-          phoneOutputBtn.disabled = true;
-          formattedOutput.textContent = "-";
-          formattedOutputBtn.disabled = true;
-          smsOutputEN.textContent = "-";
-          smsOutputENBtn.disabled = true;
-          smsOutputES.textContent = "-";
-          smsOutputESBtn.disabled = true;
-        }
-      });
-
-      // Copy to clipboard function
-      async function copyToClipboard(elementId, button) {
-        const element = document.getElementById(elementId);
-        const text = element.textContent.trim();
-
-        if (!text || text === "-") return;
-
-        try {
-          await navigator.clipboard.writeText(text);
-
-          // Visual feedback
-          const originalText = button.textContent;
-          button.textContent = "¡Copiado!";
-          button.classList.add("copied");
-
-          setTimeout(() => {
-            button.textContent = originalText;
-            button.classList.remove("copied");
-          }, 2000);
-        } catch (err) {
-          // Fallback for older browsers
-          const textarea = document.createElement("textarea");
-          textarea.value = text;
-          textarea.style.position = "fixed";
-          textarea.style.opacity = "0";
-          document.body.appendChild(textarea);
-          textarea.select();
-
-          try {
-            document.execCommand("copy");
-            button.textContent = "¡Copiado!";
-            button.classList.add("copied");
-
-            setTimeout(() => {
-              button.textContent = "Copiar";
-              button.classList.remove("copied");
-            }, 2000);
-          } catch (err) {
-            console.error("Error al copiar:", err);
-            alert("No se pudo copiar al portapapeles");
-          }
-
-          document.body.removeChild(textarea);
-        }
-      }
-
-      // Initialize
+  // Remove suffix
+  function removeSuffix(index) {
+    if (confirm("¿Eliminar este sufijo?")) {
+      suffixes.splice(index, 1);
+      saveConfig(suffixes);
       renderSuffixList();
       updateGeneratorOutputs();
-    </script>
+    }
+  }
+
+  // Toggle suffix active state
+  function toggleSuffix(index) {
+    suffixes[index].active = !suffixes[index].active;
+    saveConfig(suffixes);
+    updateGeneratorOutputs();
+  }
+
+  // Update generator outputs
+  function updateGeneratorOutputs() {
+    const baseInput = document.getElementById("baseInput");
+    const outputsDiv = document.getElementById("generatorOutputs");
+    const baseValue = baseInput.value.trim();
+    const activeSuffixes = suffixes.filter((s) => s.active);
+
+    // Reset copy states if base value changed
+    if (baseValue !== lastBaseValue) {
+      lastBaseValue = baseValue;
+    }
+
+    if (!baseValue || activeSuffixes.length === 0) {
+      outputsDiv.innerHTML = '<div style="text-align: center; color: #999; font-style: italic; padding: 20px">-</div>';
+      return;
+    }
+
+    outputsDiv.innerHTML = activeSuffixes
+      .map(
+        (suffix, index) => `
+        <div class="output-item">
+          <div class="output-field" id="gen-output-${index}">${baseValue}${suffix.value}</div>
+          <button class="copy-btn" id="gen-btn-${index}" onclick="copyToClipboardGen('gen-output-${index}', 'gen-btn-${index}')">
+            Copiar
+          </button>
+        </div>
+      `
+      )
+      .join("");
+  }
+
+  // Generator input listener
+  const baseInput = document.getElementById("baseInput");
+  baseInput.addEventListener("input", updateGeneratorOutputs);
+
+  // Phone number sanitizer
+  const phoneInput = document.getElementById("phoneInput");
+  const phoneOutput = document.getElementById("phoneOutput");
+  const phoneOutputBtn = document.getElementById("phoneOutputBtn");
+  const formattedOutput = document.getElementById("formattedOutput");
+  const formattedOutputBtn = document.getElementById("formattedOutputBtn");
+  const smsOutputEN = document.getElementById("smsOutputEN");
+  const smsOutputENBtn = document.getElementById("smsOutputENBtn");
+  const smsOutputES = document.getElementById("smsOutputES");
+  const smsOutputESBtn = document.getElementById("smsOutputESBtn");
+
+  phoneInput.addEventListener("input", function () {
+    const value = this.value.trim();
+    if (value) {
+      const sanitized = value.replace(/\D/g, "");
+      if (sanitized) {
+        phoneOutput.textContent = sanitized;
+        phoneOutputBtn.disabled = false;
+
+        const formatted = formatPhoneNumber(sanitized);
+        formattedOutput.textContent = formatted;
+        formattedOutputBtn.disabled = false;
+
+        const smsLinkEN = smsTemplates.en.replace("{NUMBER}", sanitized);
+        smsOutputEN.textContent = smsLinkEN;
+        smsOutputENBtn.disabled = false;
+
+        const smsLinkES = smsTemplates.es.replace("{NUMBER}", sanitized);
+        smsOutputES.textContent = smsLinkES;
+        smsOutputESBtn.disabled = false;
+      } else {
+        resetPhoneOutputs();
+      }
+    } else {
+      resetPhoneOutputs();
+    }
+  });
+
+  function resetPhoneOutputs() {
+    phoneOutput.textContent = "-";
+    phoneOutputBtn.disabled = true;
+    formattedOutput.textContent = "-";
+    formattedOutputBtn.disabled = true;
+    smsOutputEN.textContent = "-";
+    smsOutputENBtn.disabled = true;
+    smsOutputES.textContent = "-";
+    smsOutputESBtn.disabled = true;
+  }
+
+  // Copy to clipboard for generator (persistent state)
+  async function copyToClipboardGen(elementId, buttonId) {
+    const element = document.getElementById(elementId);
+    const button = document.getElementById(buttonId);
+    const text = element.textContent.trim();
+    
+    if (!text || text === "-") return;
+
+    try {
+      await navigator.clipboard.writeText(text);
+      button.textContent = "Copiado";
+      button.classList.add("copied");
+    } catch (err) {
+      fallbackCopy(text, button, "Copiado");
+    }
+  }
+
+  // Copy to clipboard (standard with timeout)
+  async function copyToClipboard(elementId, button) {
+    const element = document.getElementById(elementId);
+    const text = element.textContent.trim();
+    if (!text || text === "-") return;
+
+    try {
+      await navigator.clipboard.writeText(text);
+      const originalText = button.textContent;
+      button.textContent = "¡Copiado!";
+      button.classList.add("copied");
+      setTimeout(() => {
+        button.textContent = originalText;
+        button.classList.remove("copied");
+      }, 2000);
+    } catch (err) {
+      fallbackCopy(text, button, "¡Copiado!");
+    }
+  }
+
+  // Fallback copy for older browsers
+  function fallbackCopy(text, button, successText) {
+    const textarea = document.createElement("textarea");
+    textarea.value = text;
+    textarea.style.position = "fixed";
+    textarea.style.opacity = "0";
+    document.body.appendChild(textarea);
+    textarea.select();
+    try {
+      document.execCommand("copy");
+      const originalText = button.textContent;
+      button.textContent = successText;
+      button.classList.add("copied");
+      if (successText === "¡Copiado!") {
+        setTimeout(() => {
+          button.textContent = originalText;
+          button.classList.remove("copied");
+        }, 2000);
+      }
+    } catch (err) {
+      console.error("Error al copiar:", err);
+      alert("No se pudo copiar al portapapeles");
+    }
+    document.body.removeChild(textarea);
+  }
+
+  // Initialize
+  renderSuffixList();
+  updateGeneratorOutputs();
+</script>
   </body>
 </html>
