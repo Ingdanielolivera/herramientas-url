@@ -432,6 +432,110 @@
         line-height: 1.5;
       }
 
+      /* Variable Fields Styles */
+      .variables-section {
+        background: #fff3e0;
+        border: 2px solid #ffb74d;
+        border-radius: 12px;
+        padding: 15px;
+        margin-bottom: 20px;
+      }
+
+      .variables-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 15px;
+      }
+
+      .variables-title {
+        font-weight: 600;
+        font-size: 15px;
+        color: #e65100;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .btn-add-variable {
+        padding: 6px 12px;
+        background: #28a745;
+        color: white;
+        border: none;
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 12px;
+        font-weight: 600;
+        transition: all 0.3s;
+      }
+
+      .btn-add-variable:hover {
+        background: #218838;
+      }
+
+      .variable-item {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+        margin-bottom: 10px;
+        background: white;
+        padding: 10px;
+        border-radius: 8px;
+        border: 2px solid #e0e0e0;
+      }
+
+      .variable-item input {
+        padding: 8px 12px;
+        border: 2px solid #e0e0e0;
+        border-radius: 6px;
+        font-size: 13px;
+        transition: border-color 0.3s;
+      }
+
+      .variable-item input:focus {
+        outline: none;
+        border-color: #667eea;
+      }
+
+      .variable-name {
+        flex: 0 0 120px;
+      }
+
+      .variable-value {
+        flex: 1;
+      }
+
+      .btn-remove-variable {
+        padding: 6px 12px;
+        background: #dc3545;
+        color: white;
+        border: none;
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 11px;
+        font-weight: 600;
+        transition: all 0.3s;
+        white-space: nowrap;
+      }
+
+      .btn-remove-variable:hover {
+        background: #c82333;
+      }
+
+      .variable-hint {
+        font-size: 11px;
+        color: #666;
+        margin-top: 8px;
+        font-style: italic;
+      }
+
+      .no-variables {
+        text-align: center;
+        color: #999;
+        padding: 15px;
+        font-style: italic;
+      }
+
       /* Responsive */
       @media (max-width: 600px) {
         .container {
@@ -470,6 +574,19 @@
 
         .editor-actions {
           flex-direction: column;
+        }
+
+        .variable-item {
+          flex-direction: column;
+          align-items: stretch;
+        }
+
+        .variable-name {
+          flex: 1;
+        }
+
+        .btn-remove-variable {
+          width: 100%;
         }
       }
 
@@ -522,6 +639,23 @@
             placeholder="Ej: 1 561-556-5604"
             autocomplete="off"
           />
+        </div>
+
+        <!-- Variables Section -->
+        <div class="variables-section">
+          <div class="variables-header">
+            <div class="variables-title">🏷️ Variables Personalizadas</div>
+            <button class="btn-add-variable" onclick="addVariable()">
+              ➕ Agregar
+            </button>
+          </div>
+
+          <div id="variablesList"></div>
+
+          <div class="variable-hint">
+            💡 Usa [nombre_variable] en tus plantillas SMS para reemplazar con
+            estos valores
+          </div>
         </div>
 
         <div class="output-group">
@@ -765,6 +899,9 @@
         es: "Hola, me gustaria recibir un diseno y estimado gratis para mi proyecto de remodelacion.",
       };
 
+      // Variables management
+      let customVariables = [];
+
       // Encode text to URL format for SMS body
       function encodeForSMS(text) {
         return encodeURIComponent(text);
@@ -780,9 +917,20 @@
         }
       }
 
+      // Replace variables in text
+      function replaceVariables(text) {
+        let result = text;
+        customVariables.forEach((variable) => {
+          const pattern = new RegExp(`\\[${variable.name}\\]`, "g");
+          result = result.replace(pattern, variable.value);
+        });
+        return result;
+      }
+
       // Build SMS URL from plain text
       function buildSMSURL(phoneNumber, plainText) {
-        return `sms:${phoneNumber}?body=${encodeForSMS(plainText)}`;
+        const textWithVariables = replaceVariables(plainText);
+        return `sms:${phoneNumber}?body=${encodeForSMS(textWithVariables)}`;
       }
 
       // Extract text from SMS URL
@@ -822,6 +970,20 @@
         return DEFAULT_SMS_TEXT;
       }
 
+      // Load custom variables
+      function loadVariables() {
+        const saved = localStorage.getItem("customVariables");
+        if (saved) {
+          try {
+            return JSON.parse(saved);
+          } catch (e) {
+            console.error("Error loading variables:", e);
+            return [];
+          }
+        }
+        return [];
+      }
+
       // Save configuration to localStorage
       function saveConfig(config) {
         localStorage.setItem("urlGeneratorConfig", JSON.stringify(config));
@@ -830,6 +992,14 @@
       // Save SMS text templates
       function saveSMSText(templates) {
         localStorage.setItem("smsTextTemplates", JSON.stringify(templates));
+      }
+
+      // Save custom variables
+      function saveVariables() {
+        localStorage.setItem(
+          "customVariables",
+          JSON.stringify(customVariables)
+        );
       }
 
       // Format phone number as (XXX) XXX-XXXX
@@ -850,7 +1020,87 @@
       // Current configuration
       let suffixes = loadConfig();
       let smsText = loadSMSText();
+      customVariables = loadVariables();
       let lastBaseValue = "";
+
+      // Render variables list
+      function renderVariablesList() {
+        const container = document.getElementById("variablesList");
+
+        if (customVariables.length === 0) {
+          container.innerHTML =
+            '<div class="no-variables">No hay variables configuradas</div>';
+          return;
+        }
+
+        container.innerHTML = customVariables
+          .map(
+            (variable, index) => `
+          <div class="variable-item">
+            <input 
+              type="text" 
+              class="variable-name" 
+              placeholder="Nombre" 
+              value="${variable.name}"
+              onchange="updateVariableName(${index}, this.value)"
+            />
+            <input 
+              type="text" 
+              class="variable-value" 
+              placeholder="Valor" 
+              value="${variable.value}"
+              oninput="updateVariableValue(${index}, this.value)"
+            />
+            <button class="btn-remove-variable" onclick="removeVariable(${index})">
+              ✕ Eliminar
+            </button>
+          </div>
+        `
+          )
+          .join("");
+      }
+
+      // Add new variable
+      function addVariable() {
+        customVariables.push({ name: "", value: "" });
+        renderVariablesList();
+        saveVariables();
+      }
+
+      // Update variable name
+      function updateVariableName(index, name) {
+        // Remove special characters and spaces
+        const cleanName = name.replace(/[^a-zA-Z0-9_]/g, "");
+        customVariables[index].name = cleanName;
+        saveVariables();
+        renderVariablesList();
+        updatePhoneOutputs();
+      }
+
+      // Update variable value
+      function updateVariableValue(index, value) {
+        customVariables[index].value = value;
+        saveVariables();
+        updatePhoneOutputs();
+      }
+
+      // Remove variable
+      function removeVariable(index) {
+        if (confirm("¿Eliminar esta variable?")) {
+          customVariables.splice(index, 1);
+          saveVariables();
+          renderVariablesList();
+          updatePhoneOutputs();
+        }
+      }
+
+      // Update phone outputs with variables
+      function updatePhoneOutputs() {
+        const phoneInput = document.getElementById("phoneInput");
+        if (phoneInput.value.trim()) {
+          phoneInput.dispatchEvent(new Event("input"));
+        }
+      }
 
       // Initialize SMS editors
       function initializeSMSEditors() {
@@ -864,39 +1114,34 @@
         // Set initial values
         textEN.value = smsText.en;
         textES.value = smsText.es;
-        previewEN.textContent = smsText.en;
-        previewES.textContent = smsText.es;
+        previewEN.textContent = replaceVariables(smsText.en);
+        previewES.textContent = replaceVariables(smsText.es);
         urlDisplayEN.textContent = buildSMSURL("{NUMBER}", smsText.en);
         urlDisplayES.textContent = buildSMSURL("{NUMBER}", smsText.es);
 
         // Add listeners for real-time preview
         textEN.addEventListener("input", function () {
-          previewEN.textContent = this.value;
+          previewEN.textContent = replaceVariables(this.value);
           urlDisplayEN.textContent = buildSMSURL("{NUMBER}", this.value);
         });
 
         textES.addEventListener("input", function () {
-          previewES.textContent = this.value;
+          previewES.textContent = replaceVariables(this.value);
           urlDisplayES.textContent = buildSMSURL("{NUMBER}", this.value);
         });
       }
 
       // Switch between text and URL view
       function switchEditorTab(lang, tab) {
-        // Get the specific editor container
         const editorContainer = document
           .getElementById(`smsText${lang.toUpperCase()}`)
           .closest(".sms-editor");
-
-        // Get tabs and buttons within this specific editor
         const textTab = editorContainer.querySelector(`#${lang}-text`);
         const urlTab = editorContainer.querySelector(`#${lang}-url`);
         const tabButtons = editorContainer.querySelectorAll(".editor-tab-btn");
 
-        // Remove active class from all buttons
         tabButtons.forEach((btn) => btn.classList.remove("active"));
 
-        // Show/hide content and activate correct button
         if (tab === "text") {
           textTab.classList.add("active");
           urlTab.classList.remove("active");
@@ -925,7 +1170,7 @@
 
           const originalText = DEFAULT_SMS_TEXT[lang];
           textarea.value = originalText;
-          preview.textContent = originalText;
+          preview.textContent = replaceVariables(originalText);
           urlDisplay.textContent = buildSMSURL("{NUMBER}", originalText);
 
           smsText[lang] = originalText;
@@ -947,11 +1192,7 @@
         saveSMSText(smsText);
         alert("✅ Plantillas guardadas correctamente");
 
-        // Update phone output if there's a value
-        const phoneInput = document.getElementById("phoneInput");
-        if (phoneInput.value.trim()) {
-          phoneInput.dispatchEvent(new Event("input"));
-        }
+        updatePhoneOutputs();
       }
 
       // Tab switching
@@ -1183,6 +1424,7 @@
       renderSuffixList();
       updateGeneratorOutputs();
       initializeSMSEditors();
+      renderVariablesList();
     </script>
   </body>
 </html>
