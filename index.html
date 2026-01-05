@@ -129,9 +129,8 @@
       .output-item {
         display: flex;
         gap: 10px;
-        margin-bottom: 10px; /* Espacio entre resultados */
+        margin-bottom: 10px;
       }
-
 
       /* SMS Sections with visual separation */
       .sms-section {
@@ -314,6 +313,125 @@
         padding: 20px;
       }
 
+      /* SMS Editor Styles */
+      .sms-editor {
+        background: white;
+        border-radius: 8px;
+        padding: 15px;
+        margin-bottom: 15px;
+      }
+
+      .editor-tabs {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 15px;
+        border-bottom: 2px solid #e0e0e0;
+      }
+
+      .editor-tab-btn {
+        padding: 8px 16px;
+        background: transparent;
+        border: none;
+        border-bottom: 2px solid transparent;
+        cursor: pointer;
+        font-weight: 600;
+        font-size: 13px;
+        color: #666;
+        transition: all 0.3s;
+        margin-bottom: -2px;
+      }
+
+      .editor-tab-btn:hover {
+        color: #667eea;
+      }
+
+      .editor-tab-btn.active {
+        color: #667eea;
+        border-bottom-color: #667eea;
+      }
+
+      .editor-content {
+        display: none;
+      }
+
+      .editor-content.active {
+        display: block;
+      }
+
+      textarea.sms-text-editor {
+        width: 100%;
+        padding: 12px;
+        border: 2px solid #e0e0e0;
+        border-radius: 8px;
+        font-size: 14px;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+          sans-serif;
+        resize: vertical;
+        min-height: 80px;
+        line-height: 1.5;
+      }
+
+      textarea.sms-text-editor:focus {
+        outline: none;
+        border-color: #667eea;
+      }
+
+      .sms-url-display {
+        padding: 12px;
+        background: #f8f9fa;
+        border: 2px solid #e0e0e0;
+        border-radius: 8px;
+        font-size: 12px;
+        font-family: "Courier New", monospace;
+        color: #666;
+        word-break: break-all;
+        line-height: 1.6;
+      }
+
+      .editor-actions {
+        display: flex;
+        gap: 10px;
+        margin-top: 10px;
+      }
+
+      .btn-restore {
+        padding: 8px 16px;
+        background: #ff9800;
+        color: white;
+        border: none;
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 12px;
+        font-weight: 600;
+        transition: all 0.3s;
+      }
+
+      .btn-restore:hover {
+        background: #f57c00;
+      }
+
+      .preview-box {
+        background: #e8f5e9;
+        border: 2px solid #4caf50;
+        border-radius: 8px;
+        padding: 12px;
+        margin-top: 10px;
+      }
+
+      .preview-label {
+        font-size: 11px;
+        font-weight: 600;
+        color: #2e7d32;
+        text-transform: uppercase;
+        margin-bottom: 6px;
+      }
+
+      .preview-text {
+        font-size: 14px;
+        color: #1b5e20;
+        line-height: 1.5;
+      }
+
       /* Responsive */
       @media (max-width: 600px) {
         .container {
@@ -349,6 +467,10 @@
         .sms-section {
           padding: 15px;
         }
+
+        .editor-actions {
+          flex-direction: column;
+        }
       }
 
       @media (max-width: 400px) {
@@ -368,12 +490,8 @@
         <button class="tab-btn active" data-tab="generator">
           Generador URLs
         </button>
-        <button class="tab-btn" data-tab="phone">
-          Arreglar Número
-        </button>
-        <button class="tab-btn" data-tab="config">
-          ⚙️ Configuración
-        </button>
+        <button class="tab-btn" data-tab="phone">Arreglar Número</button>
+        <button class="tab-btn" data-tab="config">⚙️ Configuración</button>
       </div>
 
       <!-- Tab 1: Generador de URLs -->
@@ -497,113 +615,375 @@
           </div>
         </div>
 
-        <p style="text-align: center; color: #999; font-size: 12px; margin-top: 20px">
+        <!-- SMS Templates Configuration -->
+        <div class="config-section" id="smsConfig">
+          <label style="margin-bottom: 15px">
+            <strong>📱 Plantillas SMS:</strong>
+          </label>
+
+          <!-- English Template -->
+          <div class="sms-editor">
+            <label
+              style="
+                font-size: 13px;
+                color: #0277bd;
+                font-weight: 600;
+                margin-bottom: 10px;
+                display: block;
+              "
+            >
+              <span class="language-badge en">EN</span> Plantilla SMS Inglés
+            </label>
+
+            <div class="editor-tabs">
+              <button
+                class="editor-tab-btn active"
+                onclick="switchEditorTab('en', 'text')"
+              >
+                ✏️ Editar Texto
+              </button>
+              <button
+                class="editor-tab-btn"
+                onclick="switchEditorTab('en', 'url')"
+              >
+                🔗 Ver URL
+              </button>
+            </div>
+
+            <div class="editor-content active" id="en-text">
+              <textarea
+                class="sms-text-editor"
+                id="smsTextEN"
+                rows="3"
+                placeholder="Escribe el mensaje aquí..."
+              ></textarea>
+              <div class="preview-box">
+                <div class="preview-label">Vista Previa del Mensaje:</div>
+                <div class="preview-text" id="previewEN">-</div>
+              </div>
+            </div>
+
+            <div class="editor-content" id="en-url">
+              <div class="sms-url-display" id="urlDisplayEN">-</div>
+            </div>
+
+            <div class="editor-actions">
+              <button class="btn-restore" onclick="restoreTemplate('en')">
+                🔄 Restaurar Original
+              </button>
+            </div>
+          </div>
+
+          <!-- Spanish Template -->
+          <div class="sms-editor">
+            <label
+              style="
+                font-size: 13px;
+                color: #e65100;
+                font-weight: 600;
+                margin-bottom: 10px;
+                display: block;
+              "
+            >
+              <span class="language-badge es">ES</span> Plantilla SMS Español
+            </label>
+
+            <div class="editor-tabs">
+              <button
+                class="editor-tab-btn active"
+                onclick="switchEditorTab('es', 'text')"
+              >
+                ✏️ Editar Texto
+              </button>
+              <button
+                class="editor-tab-btn"
+                onclick="switchEditorTab('es', 'url')"
+              >
+                🔗 Ver URL
+              </button>
+            </div>
+
+            <div class="editor-content active" id="es-text">
+              <textarea
+                class="sms-text-editor"
+                id="smsTextES"
+                rows="3"
+                placeholder="Escribe el mensaje aquí..."
+              ></textarea>
+              <div class="preview-box">
+                <div class="preview-label">Vista Previa del Mensaje:</div>
+                <div class="preview-text" id="previewES">-</div>
+              </div>
+            </div>
+
+            <div class="editor-content" id="es-url">
+              <div class="sms-url-display" id="urlDisplayES">-</div>
+            </div>
+
+            <div class="editor-actions">
+              <button class="btn-restore" onclick="restoreTemplate('es')">
+                🔄 Restaurar Original
+              </button>
+            </div>
+          </div>
+
+          <button class="btn-add" onclick="saveAllTemplates()">
+            💾 Guardar Todas las Plantillas
+          </button>
+        </div>
+
+        <p
+          style="
+            text-align: center;
+            color: #999;
+            font-size: 12px;
+            margin-top: 20px;
+          "
+        >
           Los cambios se guardan automáticamente
         </p>
       </div>
     </div>
 
-<script>
-  // Default configuration
-  const DEFAULT_SUFFIXES = [
-    { value: "/es", active: true },
-    { value: "/sms", active: true },
-    { value: "/sms-es", active: true },
-    { value: "/thank-you", active: true },
-    { value: "/gracias", active: true },
-    { value: "/terms-conditions", active: true },
-    { value: "/privacy-policy", active: true },
-    { value: "/terminos-condiciones", active: true },
-    { value: "/politica-privacidad", active: true },
-  ];
+    <script>
+      // Default configuration
+      const DEFAULT_SUFFIXES = [
+        { value: "/es", active: true },
+        { value: "/sms", active: true },
+        { value: "/sms-es", active: true },
+        { value: "/thank-you", active: true },
+        { value: "/gracias", active: true },
+        { value: "/terms-conditions", active: true },
+        { value: "/privacy-policy", active: true },
+        { value: "/terminos-condiciones", active: true },
+        { value: "/politica-privacidad", active: true },
+      ];
 
-  // Default SMS templates
-  const DEFAULT_SMS_EN = "sms:{NUMBER}?body=Hey%2C%20I%27d%20like%20a%20free%20design%20%26%20estimate%20for%20my%20remodeling%20project.";
-  const DEFAULT_SMS_ES = "sms:{NUMBER}?body=Hola%2C%20me%20gustaria%20recibir%20un%20diseno%20y%20estimado%20gratis%20para%20mi%20proyecto%20de%20remodelacion.";
+      // Default SMS text (plain text, not encoded)
+      const DEFAULT_SMS_TEXT = {
+        en: "Hey, I'd like a free design & estimate for my remodeling project.",
+        es: "Hola, me gustaria recibir un diseno y estimado gratis para mi proyecto de remodelacion.",
+      };
 
-  // Load configuration from localStorage
-  function loadConfig() {
-    const saved = localStorage.getItem("urlGeneratorConfig");
-    if (saved) {
-      try {
-        return JSON.parse(saved);
-      } catch (e) {
-        console.error("Error loading config:", e);
+      // Encode text to URL format for SMS body
+      function encodeForSMS(text) {
+        return encodeURIComponent(text);
+      }
+
+      // Decode URL format to plain text
+      function decodeFromSMS(encodedText) {
+        try {
+          return decodeURIComponent(encodedText);
+        } catch (e) {
+          console.error("Error decoding:", e);
+          return encodedText;
+        }
+      }
+
+      // Build SMS URL from plain text
+      function buildSMSURL(phoneNumber, plainText) {
+        return `sms:${phoneNumber}?body=${encodeForSMS(plainText)}`;
+      }
+
+      // Extract text from SMS URL
+      function extractTextFromSMSURL(smsURL) {
+        const match = smsURL.match(/body=(.+)$/);
+        if (match) {
+          return decodeFromSMS(match[1]);
+        }
+        return "";
+      }
+
+      // Load configuration from localStorage
+      function loadConfig() {
+        const saved = localStorage.getItem("urlGeneratorConfig");
+        if (saved) {
+          try {
+            return JSON.parse(saved);
+          } catch (e) {
+            console.error("Error loading config:", e);
+            return DEFAULT_SUFFIXES;
+          }
+        }
         return DEFAULT_SUFFIXES;
       }
-    }
-    return DEFAULT_SUFFIXES;
-  }
 
-  // Load SMS templates from localStorage
-  function loadSMSTemplates() {
-    const saved = localStorage.getItem("smsTemplates");
-    if (saved) {
-      try {
-        return JSON.parse(saved);
-      } catch (e) {
-        console.error("Error loading SMS templates:", e);
-        return { en: DEFAULT_SMS_EN, es: DEFAULT_SMS_ES };
+      // Load SMS text templates
+      function loadSMSText() {
+        const saved = localStorage.getItem("smsTextTemplates");
+        if (saved) {
+          try {
+            return JSON.parse(saved);
+          } catch (e) {
+            console.error("Error loading SMS text:", e);
+            return DEFAULT_SMS_TEXT;
+          }
+        }
+        return DEFAULT_SMS_TEXT;
       }
-    }
-    return { en: DEFAULT_SMS_EN, es: DEFAULT_SMS_ES };
-  }
 
-  // Save configuration to localStorage
-  function saveConfig(config) {
-    localStorage.setItem("urlGeneratorConfig", JSON.stringify(config));
-  }
-
-  // Save SMS templates to localStorage
-  function saveSMSTemplates(templates) {
-    localStorage.setItem("smsTemplates", JSON.stringify(templates));
-  }
-
-  // Format phone number as (XXX) XXX-XXXX
-  function formatPhoneNumber(number) {
-    let cleanNumber = number;
-    if (cleanNumber.startsWith("1") && cleanNumber.length === 11) {
-      cleanNumber = cleanNumber.substring(1);
-    }
-    if (cleanNumber.length === 10) {
-      return `(${cleanNumber.substring(0, 3)}) ${cleanNumber.substring(3, 6)}-${cleanNumber.substring(6)}`;
-    }
-    return number;
-  }
-
-  // Current configuration
-  let suffixes = loadConfig();
-  let smsTemplates = loadSMSTemplates();
-  let lastBaseValue = ""; // Track last base value for copy state
-
-  // Tab switching
-  document.querySelectorAll(".tab-btn").forEach((btn) => {
-    btn.addEventListener("click", function () {
-      const tabId = this.dataset.tab;
-      document.querySelectorAll(".tab-btn").forEach((b) => b.classList.remove("active"));
-      this.classList.add("active");
-      document.querySelectorAll(".tab-content").forEach((c) => c.classList.remove("active"));
-      document.getElementById(tabId).classList.add("active");
-      
-      // Render SMS config when opening config tab
-      if (tabId === "config") {
-        renderSMSConfig();
+      // Save configuration to localStorage
+      function saveConfig(config) {
+        localStorage.setItem("urlGeneratorConfig", JSON.stringify(config));
       }
-    });
-  });
 
-  // Render suffix configuration
-  function renderSuffixList() {
-    const list = document.getElementById("suffixList");
-    if (suffixes.length === 0) {
-      list.innerHTML = '<div class="empty-config">No hay sufijos configurados</div>';
-      return;
-    }
-    list.innerHTML = suffixes
-      .map(
-        (suffix, index) => `
+      // Save SMS text templates
+      function saveSMSText(templates) {
+        localStorage.setItem("smsTextTemplates", JSON.stringify(templates));
+      }
+
+      // Format phone number as (XXX) XXX-XXXX
+      function formatPhoneNumber(number) {
+        let cleanNumber = number;
+        if (cleanNumber.startsWith("1") && cleanNumber.length === 11) {
+          cleanNumber = cleanNumber.substring(1);
+        }
+        if (cleanNumber.length === 10) {
+          return `(${cleanNumber.substring(0, 3)}) ${cleanNumber.substring(
+            3,
+            6
+          )}-${cleanNumber.substring(6)}`;
+        }
+        return number;
+      }
+
+      // Current configuration
+      let suffixes = loadConfig();
+      let smsText = loadSMSText();
+      let lastBaseValue = "";
+
+      // Initialize SMS editors
+      function initializeSMSEditors() {
+        const textEN = document.getElementById("smsTextEN");
+        const textES = document.getElementById("smsTextES");
+        const previewEN = document.getElementById("previewEN");
+        const previewES = document.getElementById("previewES");
+        const urlDisplayEN = document.getElementById("urlDisplayEN");
+        const urlDisplayES = document.getElementById("urlDisplayES");
+
+        // Set initial values
+        textEN.value = smsText.en;
+        textES.value = smsText.es;
+        previewEN.textContent = smsText.en;
+        previewES.textContent = smsText.es;
+        urlDisplayEN.textContent = buildSMSURL("{NUMBER}", smsText.en);
+        urlDisplayES.textContent = buildSMSURL("{NUMBER}", smsText.es);
+
+        // Add listeners for real-time preview
+        textEN.addEventListener("input", function () {
+          previewEN.textContent = this.value;
+          urlDisplayEN.textContent = buildSMSURL("{NUMBER}", this.value);
+        });
+
+        textES.addEventListener("input", function () {
+          previewES.textContent = this.value;
+          urlDisplayES.textContent = buildSMSURL("{NUMBER}", this.value);
+        });
+      }
+
+      // Switch between text and URL view
+      function switchEditorTab(lang, tab) {
+        // Get the specific editor container
+        const editorContainer = document
+          .getElementById(`smsText${lang.toUpperCase()}`)
+          .closest(".sms-editor");
+
+        // Get tabs and buttons within this specific editor
+        const textTab = editorContainer.querySelector(`#${lang}-text`);
+        const urlTab = editorContainer.querySelector(`#${lang}-url`);
+        const tabButtons = editorContainer.querySelectorAll(".editor-tab-btn");
+
+        // Remove active class from all buttons
+        tabButtons.forEach((btn) => btn.classList.remove("active"));
+
+        // Show/hide content and activate correct button
+        if (tab === "text") {
+          textTab.classList.add("active");
+          urlTab.classList.remove("active");
+          tabButtons[0].classList.add("active");
+        } else {
+          textTab.classList.remove("active");
+          urlTab.classList.add("active");
+          tabButtons[1].classList.add("active");
+        }
+      }
+
+      // Restore original template
+      function restoreTemplate(lang) {
+        if (
+          confirm(`¿Restaurar la plantilla original en ${lang.toUpperCase()}?`)
+        ) {
+          const textarea = document.getElementById(
+            `smsText${lang.toUpperCase()}`
+          );
+          const preview = document.getElementById(
+            `preview${lang.toUpperCase()}`
+          );
+          const urlDisplay = document.getElementById(
+            `urlDisplay${lang.toUpperCase()}`
+          );
+
+          const originalText = DEFAULT_SMS_TEXT[lang];
+          textarea.value = originalText;
+          preview.textContent = originalText;
+          urlDisplay.textContent = buildSMSURL("{NUMBER}", originalText);
+
+          smsText[lang] = originalText;
+          saveSMSText(smsText);
+        }
+      }
+
+      // Save all templates
+      function saveAllTemplates() {
+        const textEN = document.getElementById("smsTextEN").value.trim();
+        const textES = document.getElementById("smsTextES").value.trim();
+
+        if (!textEN || !textES) {
+          alert("Por favor completa ambas plantillas antes de guardar");
+          return;
+        }
+
+        smsText = { en: textEN, es: textES };
+        saveSMSText(smsText);
+        alert("✅ Plantillas guardadas correctamente");
+
+        // Update phone output if there's a value
+        const phoneInput = document.getElementById("phoneInput");
+        if (phoneInput.value.trim()) {
+          phoneInput.dispatchEvent(new Event("input"));
+        }
+      }
+
+      // Tab switching
+      document.querySelectorAll(".tab-btn").forEach((btn) => {
+        btn.addEventListener("click", function () {
+          const tabId = this.dataset.tab;
+          document
+            .querySelectorAll(".tab-btn")
+            .forEach((b) => b.classList.remove("active"));
+          this.classList.add("active");
+          document
+            .querySelectorAll(".tab-content")
+            .forEach((c) => c.classList.remove("active"));
+          document.getElementById(tabId).classList.add("active");
+        });
+      });
+
+      // Render suffix configuration
+      function renderSuffixList() {
+        const list = document.getElementById("suffixList");
+        if (suffixes.length === 0) {
+          list.innerHTML =
+            '<div class="empty-config">No hay sufijos configurados</div>';
+          return;
+        }
+        list.innerHTML = suffixes
+          .map(
+            (suffix, index) => `
         <div class="config-item">
-          <input type="checkbox" id="suffix-${index}" ${suffix.active ? "checked" : ""} onchange="toggleSuffix(${index})" />
+          <input type="checkbox" id="suffix-${index}" ${
+              suffix.active ? "checked" : ""
+            } onchange="toggleSuffix(${index})" />
           <label class="config-label" for="suffix-${index}">
             <code>${suffix.value}</code>
           </label>
@@ -612,128 +992,66 @@
           </button>
         </div>
       `
-      )
-      .join("");
-  }
+          )
+          .join("");
+      }
 
-  // Render SMS templates configuration
-  function renderSMSConfig() {
-    const existingConfig = document.getElementById("smsConfig");
-    if (existingConfig) return; // Already rendered
+      // Add new suffix
+      function addSuffix() {
+        const input = document.getElementById("newSuffix");
+        const value = input.value.trim();
+        if (!value) {
+          alert("Por favor ingresa un sufijo");
+          return;
+        }
+        if (suffixes.some((s) => s.value === value)) {
+          alert("Este sufijo ya existe");
+          return;
+        }
+        suffixes.push({ value, active: true });
+        saveConfig(suffixes);
+        renderSuffixList();
+        updateGeneratorOutputs();
+        input.value = "";
+      }
 
-    const configTab = document.getElementById("config");
-    const smsConfigHTML = `
-      <div class="config-section" id="smsConfig" style="margin-top: 20px;">
-        <label style="margin-bottom: 15px">
-          <strong>Plantillas SMS:</strong>
-        </label>
-        
-        <div style="margin-bottom: 15px;">
-          <label style="font-size: 13px; color: #0277bd; font-weight: 600;">
-            <span class="language-badge en">EN</span> Plantilla SMS Inglés
-          </label>
-          <textarea id="smsTemplateEN" rows="3" style="width: 100%; padding: 10px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 13px; font-family: 'Courier New', monospace; margin-top: 8px; resize: vertical;">${smsTemplates.en}</textarea>
-          <small style="color: #666; font-size: 11px; display: block; margin-top: 5px;">
-            Usa {NUMBER} donde debe ir el número de teléfono
-          </small>
-        </div>
+      // Remove suffix
+      function removeSuffix(index) {
+        if (confirm("¿Eliminar este sufijo?")) {
+          suffixes.splice(index, 1);
+          saveConfig(suffixes);
+          renderSuffixList();
+          updateGeneratorOutputs();
+        }
+      }
 
-        <div style="margin-bottom: 15px;">
-          <label style="font-size: 13px; color: #e65100; font-weight: 600;">
-            <span class="language-badge es">ES</span> Plantilla SMS Español
-          </label>
-          <textarea id="smsTemplateES" rows="3" style="width: 100%; padding: 10px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 13px; font-family: 'Courier New', monospace; margin-top: 8px; resize: vertical;">${smsTemplates.es}</textarea>
-          <small style="color: #666; font-size: 11px; display: block; margin-top: 5px;">
-            Usa {NUMBER} donde debe ir el número de teléfono
-          </small>
-        </div>
+      // Toggle suffix active state
+      function toggleSuffix(index) {
+        suffixes[index].active = !suffixes[index].active;
+        saveConfig(suffixes);
+        updateGeneratorOutputs();
+      }
 
-        <button class="btn-add" onclick="saveSMSConfig()">
-          💾 Guardar Plantillas SMS
-        </button>
-      </div>
-    `;
-    
-    configTab.insertAdjacentHTML('beforeend', smsConfigHTML);
-  }
+      // Update generator outputs
+      function updateGeneratorOutputs() {
+        const baseInput = document.getElementById("baseInput");
+        const outputsDiv = document.getElementById("generatorOutputs");
+        const baseValue = baseInput.value.trim();
+        const activeSuffixes = suffixes.filter((s) => s.active);
 
-  // Save SMS config
-  function saveSMSConfig() {
-    const templateEN = document.getElementById("smsTemplateEN").value.trim();
-    const templateES = document.getElementById("smsTemplateES").value.trim();
-    
-    if (!templateEN.includes("{NUMBER}") || !templateES.includes("{NUMBER}")) {
-      alert("Las plantillas deben incluir {NUMBER} para el número de teléfono");
-      return;
-    }
+        if (baseValue !== lastBaseValue) {
+          lastBaseValue = baseValue;
+        }
 
-    smsTemplates = { en: templateEN, es: templateES };
-    saveSMSTemplates(smsTemplates);
-    alert("✅ Plantillas SMS guardadas correctamente");
-    
-    // Update phone output if there's a value
-    const phoneInput = document.getElementById("phoneInput");
-    if (phoneInput.value.trim()) {
-      phoneInput.dispatchEvent(new Event('input'));
-    }
-  }
+        if (!baseValue || activeSuffixes.length === 0) {
+          outputsDiv.innerHTML =
+            '<div style="text-align: center; color: #999; font-style: italic; padding: 20px">-</div>';
+          return;
+        }
 
-  // Add new suffix
-  function addSuffix() {
-    const input = document.getElementById("newSuffix");
-    const value = input.value.trim();
-    if (!value) {
-      alert("Por favor ingresa un sufijo");
-      return;
-    }
-    if (suffixes.some((s) => s.value === value)) {
-      alert("Este sufijo ya existe");
-      return;
-    }
-    suffixes.push({ value, active: true });
-    saveConfig(suffixes);
-    renderSuffixList();
-    updateGeneratorOutputs();
-    input.value = "";
-  }
-
-  // Remove suffix
-  function removeSuffix(index) {
-    if (confirm("¿Eliminar este sufijo?")) {
-      suffixes.splice(index, 1);
-      saveConfig(suffixes);
-      renderSuffixList();
-      updateGeneratorOutputs();
-    }
-  }
-
-  // Toggle suffix active state
-  function toggleSuffix(index) {
-    suffixes[index].active = !suffixes[index].active;
-    saveConfig(suffixes);
-    updateGeneratorOutputs();
-  }
-
-  // Update generator outputs
-  function updateGeneratorOutputs() {
-    const baseInput = document.getElementById("baseInput");
-    const outputsDiv = document.getElementById("generatorOutputs");
-    const baseValue = baseInput.value.trim();
-    const activeSuffixes = suffixes.filter((s) => s.active);
-
-    // Reset copy states if base value changed
-    if (baseValue !== lastBaseValue) {
-      lastBaseValue = baseValue;
-    }
-
-    if (!baseValue || activeSuffixes.length === 0) {
-      outputsDiv.innerHTML = '<div style="text-align: center; color: #999; font-style: italic; padding: 20px">-</div>';
-      return;
-    }
-
-    outputsDiv.innerHTML = activeSuffixes
-      .map(
-        (suffix, index) => `
+        outputsDiv.innerHTML = activeSuffixes
+          .map(
+            (suffix, index) => `
         <div class="output-item">
           <div class="output-field" id="gen-output-${index}">${baseValue}${suffix.value}</div>
           <button class="copy-btn" id="gen-btn-${index}" onclick="copyToClipboardGen('gen-output-${index}', 'gen-btn-${index}')">
@@ -741,129 +1059,130 @@
           </button>
         </div>
       `
-      )
-      .join("");
-  }
-
-  // Generator input listener
-  const baseInput = document.getElementById("baseInput");
-  baseInput.addEventListener("input", updateGeneratorOutputs);
-
-  // Phone number sanitizer
-  const phoneInput = document.getElementById("phoneInput");
-  const phoneOutput = document.getElementById("phoneOutput");
-  const phoneOutputBtn = document.getElementById("phoneOutputBtn");
-  const formattedOutput = document.getElementById("formattedOutput");
-  const formattedOutputBtn = document.getElementById("formattedOutputBtn");
-  const smsOutputEN = document.getElementById("smsOutputEN");
-  const smsOutputENBtn = document.getElementById("smsOutputENBtn");
-  const smsOutputES = document.getElementById("smsOutputES");
-  const smsOutputESBtn = document.getElementById("smsOutputESBtn");
-
-  phoneInput.addEventListener("input", function () {
-    const value = this.value.trim();
-    if (value) {
-      const sanitized = value.replace(/\D/g, "");
-      if (sanitized) {
-        phoneOutput.textContent = sanitized;
-        phoneOutputBtn.disabled = false;
-
-        const formatted = formatPhoneNumber(sanitized);
-        formattedOutput.textContent = formatted;
-        formattedOutputBtn.disabled = false;
-
-        const smsLinkEN = smsTemplates.en.replace("{NUMBER}", sanitized);
-        smsOutputEN.textContent = smsLinkEN;
-        smsOutputENBtn.disabled = false;
-
-        const smsLinkES = smsTemplates.es.replace("{NUMBER}", sanitized);
-        smsOutputES.textContent = smsLinkES;
-        smsOutputESBtn.disabled = false;
-      } else {
-        resetPhoneOutputs();
+          )
+          .join("");
       }
-    } else {
-      resetPhoneOutputs();
-    }
-  });
 
-  function resetPhoneOutputs() {
-    phoneOutput.textContent = "-";
-    phoneOutputBtn.disabled = true;
-    formattedOutput.textContent = "-";
-    formattedOutputBtn.disabled = true;
-    smsOutputEN.textContent = "-";
-    smsOutputENBtn.disabled = true;
-    smsOutputES.textContent = "-";
-    smsOutputESBtn.disabled = true;
-  }
+      // Generator input listener
+      const baseInput = document.getElementById("baseInput");
+      baseInput.addEventListener("input", updateGeneratorOutputs);
 
-  // Copy to clipboard for generator (persistent state)
-  async function copyToClipboardGen(elementId, buttonId) {
-    const element = document.getElementById(elementId);
-    const button = document.getElementById(buttonId);
-    const text = element.textContent.trim();
-    
-    if (!text || text === "-") return;
+      // Phone number sanitizer
+      const phoneInput = document.getElementById("phoneInput");
+      const phoneOutput = document.getElementById("phoneOutput");
+      const phoneOutputBtn = document.getElementById("phoneOutputBtn");
+      const formattedOutput = document.getElementById("formattedOutput");
+      const formattedOutputBtn = document.getElementById("formattedOutputBtn");
+      const smsOutputEN = document.getElementById("smsOutputEN");
+      const smsOutputENBtn = document.getElementById("smsOutputENBtn");
+      const smsOutputES = document.getElementById("smsOutputES");
+      const smsOutputESBtn = document.getElementById("smsOutputESBtn");
 
-    try {
-      await navigator.clipboard.writeText(text);
-      button.textContent = "Copiado";
-      button.classList.add("copied");
-    } catch (err) {
-      fallbackCopy(text, button, "Copiado");
-    }
-  }
+      phoneInput.addEventListener("input", function () {
+        const value = this.value.trim();
+        if (value) {
+          const sanitized = value.replace(/\D/g, "");
+          if (sanitized) {
+            phoneOutput.textContent = sanitized;
+            phoneOutputBtn.disabled = false;
 
-  // Copy to clipboard (standard with timeout)
-  async function copyToClipboard(elementId, button) {
-    const element = document.getElementById(elementId);
-    const text = element.textContent.trim();
-    if (!text || text === "-") return;
+            const formatted = formatPhoneNumber(sanitized);
+            formattedOutput.textContent = formatted;
+            formattedOutputBtn.disabled = false;
 
-    try {
-      await navigator.clipboard.writeText(text);
-      const originalText = button.textContent;
-      button.textContent = "¡Copiado!";
-      button.classList.add("copied");
-      setTimeout(() => {
-        button.textContent = originalText;
-        button.classList.remove("copied");
-      }, 2000);
-    } catch (err) {
-      fallbackCopy(text, button, "¡Copiado!");
-    }
-  }
+            const smsLinkEN = buildSMSURL(sanitized, smsText.en);
+            smsOutputEN.textContent = smsLinkEN;
+            smsOutputENBtn.disabled = false;
 
-  // Fallback copy for older browsers
-  function fallbackCopy(text, button, successText) {
-    const textarea = document.createElement("textarea");
-    textarea.value = text;
-    textarea.style.position = "fixed";
-    textarea.style.opacity = "0";
-    document.body.appendChild(textarea);
-    textarea.select();
-    try {
-      document.execCommand("copy");
-      const originalText = button.textContent;
-      button.textContent = successText;
-      button.classList.add("copied");
-      if (successText === "¡Copiado!") {
-        setTimeout(() => {
-          button.textContent = originalText;
-          button.classList.remove("copied");
-        }, 2000);
+            const smsLinkES = buildSMSURL(sanitized, smsText.es);
+            smsOutputES.textContent = smsLinkES;
+            smsOutputESBtn.disabled = false;
+          } else {
+            resetPhoneOutputs();
+          }
+        } else {
+          resetPhoneOutputs();
+        }
+      });
+
+      function resetPhoneOutputs() {
+        phoneOutput.textContent = "-";
+        phoneOutputBtn.disabled = true;
+        formattedOutput.textContent = "-";
+        formattedOutputBtn.disabled = true;
+        smsOutputEN.textContent = "-";
+        smsOutputENBtn.disabled = true;
+        smsOutputES.textContent = "-";
+        smsOutputESBtn.disabled = true;
       }
-    } catch (err) {
-      console.error("Error al copiar:", err);
-      alert("No se pudo copiar al portapapeles");
-    }
-    document.body.removeChild(textarea);
-  }
 
-  // Initialize
-  renderSuffixList();
-  updateGeneratorOutputs();
-</script>
+      // Copy to clipboard for generator
+      async function copyToClipboardGen(elementId, buttonId) {
+        const element = document.getElementById(elementId);
+        const button = document.getElementById(buttonId);
+        const text = element.textContent.trim();
+
+        if (!text || text === "-") return;
+
+        try {
+          await navigator.clipboard.writeText(text);
+          button.textContent = "Copiado";
+          button.classList.add("copied");
+        } catch (err) {
+          fallbackCopy(text, button, "Copiado");
+        }
+      }
+
+      // Copy to clipboard (standard with timeout)
+      async function copyToClipboard(elementId, button) {
+        const element = document.getElementById(elementId);
+        const text = element.textContent.trim();
+        if (!text || text === "-") return;
+
+        try {
+          await navigator.clipboard.writeText(text);
+          const originalText = button.textContent;
+          button.textContent = "¡Copiado!";
+          button.classList.add("copied");
+          setTimeout(() => {
+            button.textContent = originalText;
+            button.classList.remove("copied");
+          }, 2000);
+        } catch (err) {
+          fallbackCopy(text, button, "¡Copiado!");
+        }
+      }
+
+      // Fallback copy for older browsers
+      function fallbackCopy(text, button, successText) {
+        const textarea = document.createElement("textarea");
+        textarea.value = text;
+        textarea.style.position = "fixed";
+        textarea.style.opacity = "0";
+        document.body.appendChild(textarea);
+        textarea.select();
+        try {
+          document.execCommand("copy");
+          const originalText = button.textContent;
+          button.textContent = successText;
+          button.classList.add("copied");
+          if (successText === "¡Copiado!") {
+            setTimeout(() => {
+              button.textContent = originalText;
+              button.classList.remove("copied");
+            }, 2000);
+          }
+        } catch (err) {
+          console.error("Error al copiar:", err);
+          alert("No se pudo copiar al portapapeles");
+        }
+        document.body.removeChild(textarea);
+      }
+
+      // Initialize
+      renderSuffixList();
+      updateGeneratorOutputs();
+      initializeSMSEditors();
+    </script>
   </body>
 </html>
