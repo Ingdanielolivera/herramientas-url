@@ -536,6 +536,60 @@
         font-style: italic;
       }
 
+      /* Variables Tags Styles */
+      .variables-tags {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-bottom: 12px;
+        padding: 10px;
+        background: #f8f9fa;
+        border-radius: 8px;
+        min-height: 40px;
+        align-items: center;
+      }
+
+      .variables-tags.empty {
+        justify-content: center;
+      }
+
+      .variable-tag {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        padding: 6px 12px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border: none;
+        border-radius: 20px;
+        font-size: 12px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s;
+        box-shadow: 0 2px 4px rgba(102, 126, 234, 0.3);
+      }
+
+      .variable-tag:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(102, 126, 234, 0.5);
+      }
+
+      .variable-tag:active {
+        transform: translateY(0);
+      }
+
+      .variable-tag-icon {
+        font-size: 10px;
+      }
+
+      .no-variables-hint {
+        color: #999;
+        font-size: 12px;
+        font-style: italic;
+        text-align: center;
+        width: 100%;
+      }
+
       /* Responsive */
       @media (max-width: 600px) {
         .container {
@@ -785,6 +839,9 @@
             </div>
 
             <div class="editor-content active" id="en-text">
+              <!-- Variables Tags -->
+              <div class="variables-tags" id="variablesTagsEN"></div>
+
               <textarea
                 class="sms-text-editor"
                 id="smsTextEN"
@@ -838,6 +895,9 @@
             </div>
 
             <div class="editor-content active" id="es-text">
+              <!-- Variables Tags -->
+              <div class="variables-tags" id="variablesTagsES"></div>
+
               <textarea
                 class="sms-text-editor"
                 id="smsTextES"
@@ -921,8 +981,10 @@
       function replaceVariables(text) {
         let result = text;
         customVariables.forEach((variable) => {
-          const pattern = new RegExp(`\\[${variable.name}\\]`, "g");
-          result = result.replace(pattern, variable.value);
+          if (variable.name && variable.value) {
+            const pattern = new RegExp(`\\[${variable.name}\\]`, "g");
+            result = result.replace(pattern, variable.value);
+          }
         });
         return result;
       }
@@ -1000,6 +1062,7 @@
           "customVariables",
           JSON.stringify(customVariables)
         );
+        renderVariablesTags();
       }
 
       // Format phone number as (XXX) XXX-XXXX
@@ -1022,6 +1085,74 @@
       let smsText = loadSMSText();
       customVariables = loadVariables();
       let lastBaseValue = "";
+
+      // Insert variable into textarea at cursor position
+      function insertVariableIntoTextarea(textareaId, variableName) {
+        const textarea = document.getElementById(textareaId);
+        const startPos = textarea.selectionStart;
+        const endPos = textarea.selectionEnd;
+        const textBefore = textarea.value.substring(0, startPos);
+        const textAfter = textarea.value.substring(endPos);
+        const variableText = `[${variableName}]`;
+
+        textarea.value = textBefore + variableText + textAfter;
+
+        // Set cursor position after inserted variable
+        const newCursorPos = startPos + variableText.length;
+        textarea.setSelectionRange(newCursorPos, newCursorPos);
+        textarea.focus();
+
+        // Trigger input event to update preview
+        textarea.dispatchEvent(new Event("input"));
+      }
+
+      // Render variables tags
+      function renderVariablesTags() {
+        const tagsEN = document.getElementById("variablesTagsEN");
+        const tagsES = document.getElementById("variablesTagsES");
+
+        const validVariables = customVariables.filter(
+          (v) => v.name && v.name.trim()
+        );
+
+        if (validVariables.length === 0) {
+          const emptyHTML =
+            '<div class="no-variables-hint">💡 Agrega variables en la pestaña "Arreglar Número" para usarlas aquí</div>';
+          tagsEN.innerHTML = emptyHTML;
+          tagsES.innerHTML = emptyHTML;
+          tagsEN.classList.add("empty");
+          tagsES.classList.add("empty");
+          return;
+        }
+
+        tagsEN.classList.remove("empty");
+        tagsES.classList.remove("empty");
+
+        const tagsHTML = validVariables
+          .map(
+            (variable) => `
+          <button class="variable-tag" onclick="insertVariableIntoTextarea('smsTextEN', '${variable.name}')" type="button" title="Valor: ${variable.value}">
+            <span class="variable-tag-icon">🏷️</span>
+            [${variable.name}]
+          </button>
+        `
+          )
+          .join("");
+
+        const tagsHTMLES = validVariables
+          .map(
+            (variable) => `
+          <button class="variable-tag" onclick="insertVariableIntoTextarea('smsTextES', '${variable.name}')" type="button" title="Valor: ${variable.value}">
+            <span class="variable-tag-icon">🏷️</span>
+            [${variable.name}]
+          </button>
+        `
+          )
+          .join("");
+
+        tagsEN.innerHTML = tagsHTML;
+        tagsES.innerHTML = tagsHTMLES;
+      }
 
       // Render variables list
       function renderVariablesList() {
@@ -1075,6 +1206,7 @@
         saveVariables();
         renderVariablesList();
         updatePhoneOutputs();
+        updateEditorPreviews();
       }
 
       // Update variable value
@@ -1082,6 +1214,7 @@
         customVariables[index].value = value;
         saveVariables();
         updatePhoneOutputs();
+        updateEditorPreviews();
       }
 
       // Remove variable
@@ -1091,6 +1224,7 @@
           saveVariables();
           renderVariablesList();
           updatePhoneOutputs();
+          updateEditorPreviews();
         }
       }
 
@@ -1099,6 +1233,26 @@
         const phoneInput = document.getElementById("phoneInput");
         if (phoneInput.value.trim()) {
           phoneInput.dispatchEvent(new Event("input"));
+        }
+      }
+
+      // Update editor previews
+      function updateEditorPreviews() {
+        const textEN = document.getElementById("smsTextEN");
+        const textES = document.getElementById("smsTextES");
+        const previewEN = document.getElementById("previewEN");
+        const previewES = document.getElementById("previewES");
+        const urlDisplayEN = document.getElementById("urlDisplayEN");
+        const urlDisplayES = document.getElementById("urlDisplayES");
+
+        if (textEN && previewEN) {
+          previewEN.textContent = replaceVariables(textEN.value);
+          urlDisplayEN.textContent = buildSMSURL("{NUMBER}", textEN.value);
+        }
+
+        if (textES && previewES) {
+          previewES.textContent = replaceVariables(textES.value);
+          urlDisplayES.textContent = buildSMSURL("{NUMBER}", textES.value);
         }
       }
 
@@ -1425,6 +1579,7 @@
       updateGeneratorOutputs();
       initializeSMSEditors();
       renderVariablesList();
+      renderVariablesTags();
     </script>
   </body>
 </html>
